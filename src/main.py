@@ -27,7 +27,7 @@ def main():
         # Parse User Input
         # TODO: Move all these parse things into a seperate function maybe, or at least new/edit
         if userInput[0] == "view":
-            if len(userInput) <= 1:
+            if len(userInput) <= 1 or len(userInput) > 2:
                 printError("Invalid parameter extensions for view.")
             elif userInput[1] == "all":
                 printHeader("DISPLAYING ALL PAYMENTS")
@@ -36,7 +36,7 @@ def main():
                 printHeader("DISPLAYING SPECIFIC PAYMENT")
                 foundPayment = findPayment(userInput[1])
                 if foundPayment is None:
-                    printError("Provided payment name does not exist")
+                    printError(userInput[1] + " does not exist")
                 else:
                     printPayment(foundPayment)
 
@@ -100,6 +100,7 @@ def main():
         elif userInput[0] == "exit":
             printHeader("EXITING PROGRAM")
             print("Thank you for utilizing the service! Goodbye.")
+            printLine(50)
             continueApp = False
             break
 
