@@ -40,15 +40,14 @@ def main():
             readyToSubmit = False
             while not readyToSubmit:
                 # Request Payment Name
-                # TODO: Ensure no repeats in names
                 printHeader("CREATING A NEW PAYMENT")
                 paymentName = input("Enter payment's name: ").lower()
-                while len(paymentName) <= 0 or len(paymentName) > 128:
-                    printError("Payment's name must contain appropriate number of characters (1-128).")
-                    paymentName = input("Enter payment's name: ")
+                while len(paymentName) <= 0 or len(paymentName) > 128 or not validateUniqueness(paymentName):
+                    printError("Payment's name must be a unique and contain appropriate number of characters (1-128).")
+                    paymentName = input("Enter payment's name: ").lower()
 
                 # Request Payment Value
-                # TODO: Ensure if value is flat like 5, it rounds to 5.00 and not 5.0
+                # TODO: Clean up payment value section
                 try:
                     paymentValue = round(float(input("Enter payment's value: ")), 2)
                 except ValueError:
@@ -59,6 +58,7 @@ def main():
                         paymentValue = round(float(input("Enter payment's value: ")), 2)
                     except ValueError:
                         paymentValue = 0
+                paymentValue = '{:.2f}'.format(paymentValue)
 
                 # Request Payment Date
                 paymentDate = validateDate(input("Enter payment's last or upcoming date in MM/DD/YYYY format: "))
@@ -67,7 +67,7 @@ def main():
                     paymentDate = validateDate(input("Enter payment's last or upcoming date in MM/DD/YYYY format: "))
 
                 # User Validation
-                clearTerminal()
+                printHeader("CONFIRM PAYMENT CREATION")
                 print("Name:\t" + paymentName)
                 print("Value:\t" + str(paymentValue))
                 print("Date:\t" + str(paymentDate))
@@ -113,7 +113,6 @@ def printHeader(text):
     printLine(50)
 
 def printCloser():
-    #print("\n")
     printLine(50)
     input("Press Enter to Continue ")
     clearTerminal()
@@ -134,6 +133,9 @@ def printPayment(payment):
     print("Value:\t" + str(payment.value))
     print("Date:\t" + str(payment.date))
 
+def clearTerminal():
+    os.system('cls||clear')
+
 def validateDate(givenDate):
     try:
         returnDate = datetime.datetime.strptime(givenDate, '%m/%d/%Y')
@@ -141,8 +143,11 @@ def validateDate(givenDate):
         return None
     return datetime.datetime.strftime(returnDate, '%m/%d/%Y')
 
-def clearTerminal():
-    os.system('cls||clear')
+def validateUniqueness(paymentName):
+    for payment in paymentList:
+        if payment.name.lower() == paymentName:
+            return False
+    return True
 
 
 # Main Execution
