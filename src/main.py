@@ -29,12 +29,17 @@ def main():
         if userInput[0] == "view":
             if len(userInput) <= 1:
                 printError("Invalid parameter extensions for view.")
-            if userInput[1] == "all":
+            elif userInput[1] == "all":
                 printHeader("DISPLAYING ALL PAYMENTS")
                 printPayments()
             else:
                 printHeader("DISPLAYING SPECIFIC PAYMENT")
-                print("Attempting to locate " + userInput[1])
+                foundPayment = findPayment(userInput[1])
+                if foundPayment is None:
+                    printError("Provided payment name does not exist")
+                else:
+                    printPayment(foundPayment)
+
 
         elif userInput[0] == "new":
             readyToSubmit = False
@@ -121,6 +126,9 @@ def printError(text):
     print("\tERROR: "+text)
 
 def printPayments():
+    if len(paymentList) <= 0:
+        printError("No payments exist")
+        return
     for payment in paymentList:
         printPayment(payment)
         if paymentList.index(payment) != len(paymentList)-1:
@@ -149,6 +157,10 @@ def validateUniqueness(paymentName):
             return False
     return True
 
+def findPayment(paymentName):
+    for payment in paymentList:
+        if payment.name.lower() == paymentName.lower():
+            return payment
 
 # Main Execution
 main()
