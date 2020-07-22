@@ -40,6 +40,7 @@ def main():
             readyToSubmit = False
             while not readyToSubmit:
                 # Request Payment Name
+                # TODO: Ensure no repeats in names
                 printHeader("CREATING A NEW PAYMENT")
                 paymentName = input("Enter payment's name: ").lower()
                 while len(paymentName) <= 0 or len(paymentName) > 128:
@@ -47,6 +48,7 @@ def main():
                     paymentName = input("Enter payment's name: ")
 
                 # Request Payment Value
+                # TODO: Ensure if value is flat like 5, it rounds to 5.00 and not 5.0
                 try:
                     paymentValue = round(float(input("Enter payment's value: ")), 2)
                 except ValueError:
@@ -59,16 +61,17 @@ def main():
                         paymentValue = 0
 
                 # Request Payment Date
-                paymentDate = input("Enter payment's last or upcoming date in MM/DD/YYYY format: ")
-                while not validateDate(paymentDate):
+                paymentDate = validateDate(input("Enter payment's last or upcoming date in MM/DD/YYYY format: "))
+                while paymentDate is None:
                     printError("Payment date must be in the MM/DD/YYYY format.")
-                    paymentDate = input("Enter payment's last or upcoming date in MM/DD/YYYY format: ")
-                
+                    paymentDate = validateDate(input("Enter payment's last or upcoming date in MM/DD/YYYY format: "))
+
                 # User Validation
-                print("\nName:\t" + paymentName)
+                clearTerminal()
+                print("Name:\t" + paymentName)
                 print("Value:\t" + str(paymentValue))
                 print("Date:\t" + str(paymentDate))
-                userValidate = input("Are you okay with these values? Y/N: ").lower()
+                userValidate = input("\nAre you okay with these values? Y/N: ").lower()
                 while userValidate != "y" and userValidate != "n" and userValidate != "yes" and userValidate != "no":
                     printError("Must respond with either Y or N")
                     userValidate = input("Are you okay with these values? Y/N: ").lower()
@@ -78,7 +81,7 @@ def main():
                 else:
                     readyToSubmit = True
 
-            # Create Payment and Append to paymentList
+                # Create Payment and Append to paymentList
                 newPayment = Payment(paymentName, paymentValue, paymentDate)
                 if not newPayment:
                     printError("Failed to create new payment with given credentials.")
@@ -133,10 +136,10 @@ def printPayment(payment):
 
 def validateDate(givenDate):
     try:
-        datetime.datetime.strptime(givenDate, '%m/%d/%Y')
+        returnDate = datetime.datetime.strptime(givenDate, '%m/%d/%Y')
     except ValueError:
-        return False
-    return True
+        return None
+    return datetime.datetime.strftime(returnDate, '%m/%d/%Y')
 
 def clearTerminal():
     os.system('cls||clear')
