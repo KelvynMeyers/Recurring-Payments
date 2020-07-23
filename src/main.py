@@ -18,6 +18,7 @@ def main():
         print("\tType 'new' to create a new payment")
         print("\tType 'edit name' to edit an existing payment")
         print("\tType 'delete name' to delete an existing payment")
+        print("\tType 'exit' to end the program")
 
         # Request User Input
         userInput = input("\nUser Input: ").lower()
@@ -25,103 +26,109 @@ def main():
         print()
 
         # Parse User Input
-        # TODO: Move all these parse things into a seperate function maybe, or at least new/edit
         if userInput[0] == "view":
-            if len(userInput) == 1 or userInput[1] == "":
-                printError("View must contain a second parameter")
-            elif userInput[1] == "all":
-                printHeader("DISPLAYING ALL PAYMENTS")
-                printPayments()
-            else:
-                printHeader("DISPLAYING SPECIFIC PAYMENT")
-                foundPayment = findPayment(userInput[1])
-                if foundPayment is None:
-                    printError("'" + userInput[1] + "' does not exist")
-                else:
-                    printPayment(foundPayment)
-
-
+            continueApp = programView(userInput)
         elif userInput[0] == "new":
-            readyToSubmit = False
-            while not readyToSubmit:
-                # Request Payment Name
-                # TODO: Make sure functionality for multi-word payments is acceptable. Possibly by appending valid userInput[1]+x's to a string
-                printHeader("CREATING A NEW PAYMENT")
-                paymentName = input("Enter payment's name: ").lower()
-                while len(paymentName) <= 0 or len(paymentName) > 128 or not validateUniqueness(paymentName):
-                    printError("Payment's name must be a unique and contain appropriate number of characters (1-128).")
-                    paymentName = input("Enter payment's name: ").lower()
-
-                # Request Payment Value
-                # TODO: Clean up payment value section
-                try:
-                    paymentValue = round(float(input("Enter payment's value: ")), 2)
-                except ValueError:
-                    paymentValue = 0
-                while paymentValue <= 0.00:
-                    printError("Payment's value must be a number greater than zero")
-                    try:
-                        paymentValue = round(float(input("Enter payment's value: ")), 2)
-                    except ValueError:
-                        paymentValue = 0
-                paymentValue = '{:.2f}'.format(paymentValue)
-
-                # Request Payment Date
-                paymentDate = validateDate(input("Enter payment's last or upcoming date in MM/DD/YYYY format: "))
-                while paymentDate is None:
-                    printError("Payment date must be in the MM/DD/YYYY format.")
-                    paymentDate = validateDate(input("Enter payment's last or upcoming date in MM/DD/YYYY format: "))
-
-                # User Validation
-                printHeader("CONFIRM PAYMENT CREATION")
-                print("Name:\t" + paymentName)
-                print("Value:\t" + str(paymentValue))
-                print("Date:\t" + str(paymentDate))
-                userValidation = userValidate("Are you okay with these values?")
-                if not userValidation:
-                    readyToSubmit = False
-                    continue
-                readyToSubmit = True
-
-                # Create Payment and Append to paymentList
-                newPayment = Payment(paymentName, paymentValue, paymentDate)
-                if not newPayment:
-                    printError("Failed to create new payment with given credentials.")
-                    break
-                paymentList.append(newPayment)
-
-            # Closure
-            printHeader("SUCCESSFULLY CREATED PAYMENT")
-            printPayment(newPayment)
-
+            continueApp = programNew(userInput)
         elif userInput[0] == "edit":
-            # TODO: Consider moving userValidate section [y/n] into its own function with a message parameter
-            if len(userInput) == 1 or userInput == "":
-                printError("Edit must have a second parameter")
-                break
-            printHeader("FINDING PAYMENT TO EDIT")
-            foundPayment = findPayment(userInput[1])
-            if foundPayment is None:
-                printError("'" + userInput[1] + "' does not exist.")
-                break
-            printPayment(foundPayment)
-            userValidation = userValidate("Do you want to edit this payment?")
-            if not userValidation:
-                break
-            
-            
-
+            continueApp = programEdit(userInput)  
         elif userInput[0] == "exit":
-            printHeader("EXITING PROGRAM")
-            print("Thank you for utilizing the service! Goodbye.")
-            printLine(50)
-            continueApp = False
-            break
-
+            continueApp = programExit(userInput)
         else:
             printError("Invalid parameters provided!")
 
         printCloser()
+
+def programView(userInput):
+    if len(userInput) == 1 or userInput[1] == "":
+        printError("View must contain a second parameter")
+    elif userInput[1] == "all":
+        printHeader("DISPLAYING ALL PAYMENTS")
+        printPayments()
+    else:
+        # TODO: Make sure functionality for multi-word payments are acceptable. Possibly by appending valid userInput[1]+x's to a string
+        printHeader("DISPLAYING SPECIFIC PAYMENT")
+        foundPayment = findPayment(userInput[1])
+        if foundPayment is None:
+            printError("'" + userInput[1] + "' does not exist")
+        else:
+            printPayment(foundPayment)
+    return True
+
+def programEdit(userInput):
+    # TODO: Consider moving userValidate section [y/n] into its own function with a message parameter
+    if len(userInput) == 1 or userInput == "":
+        printError("Edit must have a second parameter")
+        return True
+    printHeader("FINDING PAYMENT TO EDIT")
+    foundPayment = findPayment(userInput[1])
+    if foundPayment is None:
+        printError("'" + userInput[1] + "' does not exist.")
+        return True
+    printPayment(foundPayment)
+    userValidation = userValidate("Do you want to edit this payment?")
+    if not userValidation:
+        return True
+    return True
+
+def programNew(userInput):
+    readyToSubmit = False
+    while not readyToSubmit:
+        # Request Payment Name
+        printHeader("CREATING A NEW PAYMENT")
+        paymentName = input("Enter payment's name: ").lower()
+        while len(paymentName) <= 0 or len(paymentName) > 128 or not validateUniqueness(paymentName):
+            printError("Payment's name must be a unique and contain appropriate number of characters (1-128).")
+            paymentName = input("Enter payment's name: ").lower()
+
+        # Request Payment Value
+        # TODO: Clean up payment value section
+        try:
+            paymentValue = round(float(input("Enter payment's value: ")), 2)
+        except ValueError:
+            paymentValue = 0
+        while paymentValue <= 0.00:
+            printError("Payment's value must be a number greater than zero")
+            try:
+                paymentValue = round(float(input("Enter payment's value: ")), 2)
+            except ValueError:
+                paymentValue = 0
+        paymentValue = '{:.2f}'.format(paymentValue)
+
+        # Request Payment Date
+        paymentDate = validateDate(input("Enter payment's last or upcoming date in MM/DD/YYYY format: "))
+        while paymentDate is None:
+            printError("Payment date must be in the MM/DD/YYYY format.")
+            paymentDate = validateDate(input("Enter payment's last or upcoming date in MM/DD/YYYY format: "))
+
+        # User Validation
+        printHeader("CONFIRM PAYMENT CREATION")
+        print("Name:\t" + paymentName)
+        print("Value:\t" + str(paymentValue))
+        print("Date:\t" + str(paymentDate))
+        userValidation = userValidate("Are you okay with these values?")
+        if not userValidation:
+            readyToSubmit = False
+            continue
+        readyToSubmit = True
+
+        # Create Payment and Append to paymentList
+        newPayment = Payment(paymentName, paymentValue, paymentDate)
+        if not newPayment:
+            printError("Failed to create new payment with given credentials.")
+            return False
+        paymentList.append(newPayment)
+
+    # Closure
+    printHeader("SUCCESSFULLY CREATED PAYMENT")
+    printPayment(newPayment)
+    return True
+
+def programExit(userInput):
+    printHeader("EXITING PROGRAM")
+    print("Thank you for utilizing the service! Goodbye.")
+    return False
+
 
 def userValidate(message):
     userValidate = input("\n"+message+" [Y/N]: ").lower()
