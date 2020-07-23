@@ -27,8 +27,8 @@ def main():
         # Parse User Input
         # TODO: Move all these parse things into a seperate function maybe, or at least new/edit
         if userInput[0] == "view":
-            if len(userInput) <= 1 or len(userInput) > 2:
-                printError("Invalid parameter extensions for view.")
+            if len(userInput) == 1 or userInput[1] == "":
+                printError("View must contain a second parameter")
             elif userInput[1] == "all":
                 printHeader("DISPLAYING ALL PAYMENTS")
                 printPayments()
@@ -36,7 +36,7 @@ def main():
                 printHeader("DISPLAYING SPECIFIC PAYMENT")
                 foundPayment = findPayment(userInput[1])
                 if foundPayment is None:
-                    printError(userInput[1] + " does not exist")
+                    printError("'" + userInput[1] + "' does not exist")
                 else:
                     printPayment(foundPayment)
 
@@ -45,6 +45,7 @@ def main():
             readyToSubmit = False
             while not readyToSubmit:
                 # Request Payment Name
+                # TODO: Make sure functionality for multi-word payments is acceptable. Possibly by appending valid userInput[1]+x's to a string
                 printHeader("CREATING A NEW PAYMENT")
                 paymentName = input("Enter payment's name: ").lower()
                 while len(paymentName) <= 0 or len(paymentName) > 128 or not validateUniqueness(paymentName):
@@ -76,15 +77,11 @@ def main():
                 print("Name:\t" + paymentName)
                 print("Value:\t" + str(paymentValue))
                 print("Date:\t" + str(paymentDate))
-                userValidate = input("\nAre you okay with these values? Y/N: ").lower()
-                while userValidate != "y" and userValidate != "n" and userValidate != "yes" and userValidate != "no":
-                    printError("Must respond with either Y or N")
-                    userValidate = input("Are you okay with these values? Y/N: ").lower()
-                if userValidate == "n" or userValidate == "no":
+                userValidation = userValidate("Are you okay with these values?")
+                if not userValidation:
                     readyToSubmit = False
-                    continue;
-                else:
-                    readyToSubmit = True
+                    continue
+                readyToSubmit = True
 
                 # Create Payment and Append to paymentList
                 newPayment = Payment(paymentName, paymentValue, paymentDate)
@@ -97,6 +94,23 @@ def main():
             printHeader("SUCCESSFULLY CREATED PAYMENT")
             printPayment(newPayment)
 
+        elif userInput[0] == "edit":
+            # TODO: Consider moving userValidate section [y/n] into its own function with a message parameter
+            if len(userInput) == 1 or userInput == "":
+                printError("Edit must have a second parameter")
+                break
+            printHeader("FINDING PAYMENT TO EDIT")
+            foundPayment = findPayment(userInput[1])
+            if foundPayment is None:
+                printError("'" + userInput[1] + "' does not exist.")
+                break
+            printPayment(foundPayment)
+            userValidation = userValidate("Do you want to edit this payment?")
+            if not userValidation:
+                break
+            
+            
+
         elif userInput[0] == "exit":
             printHeader("EXITING PROGRAM")
             print("Thank you for utilizing the service! Goodbye.")
@@ -108,6 +122,15 @@ def main():
             printError("Invalid parameters provided!")
 
         printCloser()
+
+def userValidate(message):
+    userValidate = input("\n"+message+" [Y/N]: ").lower()
+    while userValidate != "y" and userValidate != "n" and userValidate != "yes" and userValidate != "no":
+        printError("Must respond with either Y or N")
+        userValidate = input("\n"+message+" [Y/N]: ").lower()
+    if userValidate == "n" or userValidate == "no":
+        return False
+    return True
 
 
 def printLine(amt):
@@ -153,6 +176,8 @@ def validateDate(givenDate):
     return datetime.datetime.strftime(returnDate, '%m/%d/%Y')
 
 def validateUniqueness(paymentName):
+    if paymentName == "all":
+        return False
     for payment in paymentList:
         if payment.name.lower() == paymentName:
             return False
