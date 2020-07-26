@@ -48,59 +48,75 @@ def programView(userInput):
     else:
         # TODO: Make sure functionality for multi-word payments are acceptable. Possibly by appending valid userInput[1]+x's to a string
         printHeader("DISPLAYING SPECIFIC PAYMENT")
-        foundPayment = findPayment(userInput[1])
-        if foundPayment is None:
-            printError("'" + userInput[1] + "' does not exist")
-        else:
-            printPayment(foundPayment)
+        paymentIndex = findPayment(userInput[1])
+        if paymentIndex < 0:
+            printError("'" + userInput[1] + "' does not exist.")
+            return True
+        foundPayment = paymentList[paymentIndex]
+        printPayment(foundPayment)
     return True
 
 def programEdit(userInput):
-    # TODO: Consider moving userValidate section [y/n] into its own function with a message parameter
     if len(userInput) == 1 or userInput == "":
         printError("Edit must have a second parameter")
         return True
+    
+    # Find Payment in List
     printHeader("FINDING PAYMENT TO EDIT")
-    foundPayment = findPayment(userInput[1])
-    if foundPayment is None:
+    paymentIndex = findPayment(userInput[1])
+    if paymentIndex < 0:
         printError("'" + userInput[1] + "' does not exist.")
         return True
+    foundPayment = paymentList[paymentIndex]
+    
+    # Validate Payment Selection
     printPayment(foundPayment)
     userValidation = userValidate("Do you want to edit this payment?")
     if not userValidation:
         return True
+    
+    readyToSubmit = False
+    while not readyToSubmit:
+        printHeader("UPDATING EXISTING PAYMENT")
+        # Request Payment Info
+        paymentName = requestPaymentName(True)
+        paymentValue = requestPaymentValue()
+        paymentDate = requestPaymentDate()
+
+        # User Validation
+        printHeader("CONFIRM PAYMENT UPDATE")
+        print("Name:\t" + paymentName)
+        print("Value:\t" + str(paymentValue))
+        print("Date:\t" + str(paymentDate))
+        userValidation = userValidate("Are you okay with these values?")
+        if not userValidation:
+            readyToSubmit = False
+            continue
+        readyToSubmit = True
+
+        # Update Payment in Payment List
+        backupPayment = paymentList[paymentIndex]
+        paymentList[paymentIndex] = Payment(paymentName, paymentValue, paymentDate)
+        foundPayment = paymentList[paymentIndex]
+        if not foundPayment:
+            printError("Failed to update existing payment with given credentials. Returning to old values")
+            paymentList[paymentIndex] = backupPayment
+            return False
+    
+    # Closure
+    printHeader("SUCCESSFULLY EDITED PAYMENT")
+    printPayment(foundPayment)
     return True
 
 def programNew(userInput):
     readyToSubmit = False
     while not readyToSubmit:
-        # Request Payment Name
         printHeader("CREATING A NEW PAYMENT")
-        paymentName = input("Enter payment's name: ").lower()
-        while len(paymentName) <= 0 or len(paymentName) > 128 or not validateUniqueness(paymentName):
-            printError("Payment's name must be a unique and contain appropriate number of characters (1-128).")
-            paymentName = input("Enter payment's name: ").lower()
-
-        # Request Payment Value
-        # TODO: Clean up payment value section
-        try:
-            paymentValue = round(float(input("Enter payment's value: ")), 2)
-        except ValueError:
-            paymentValue = 0
-        while paymentValue <= 0.00:
-            printError("Payment's value must be a number greater than zero")
-            try:
-                paymentValue = round(float(input("Enter payment's value: ")), 2)
-            except ValueError:
-                paymentValue = 0
-        paymentValue = '{:.2f}'.format(paymentValue)
-
-        # Request Payment Date
-        paymentDate = validateDate(input("Enter payment's last or upcoming date in MM/DD/YYYY format: "))
-        while paymentDate is None:
-            printError("Payment date must be in the MM/DD/YYYY format.")
-            paymentDate = validateDate(input("Enter payment's last or upcoming date in MM/DD/YYYY format: "))
-
+        # Request Payment Info
+        paymentName = requestPaymentName(False)
+        paymentValue = requestPaymentValue()
+        paymentDate = requestPaymentDate()
+        
         # User Validation
         printHeader("CONFIRM PAYMENT CREATION")
         print("Name:\t" + paymentName)
@@ -129,6 +145,33 @@ def programExit(userInput):
     print("Thank you for utilizing the service! Goodbye.")
     return False
 
+def requestPaymentName(isAnEdit):
+    paymentName = input("Enter payment's name: ").lower()
+    while len(paymentName) <= 0 or len(paymentName) > 255 or not validateUniqueness(paymentName, isAnEdit):
+        printError("Payment's name must be a unique and contain appropriate number of characters (1-255).")
+        paymentName = input("Enter payment's name: ").lower()
+    return paymentName
+
+def requestPaymentValue():
+    # TODO: Clean up payment value section
+    try:
+        paymentValue = round(float(input("Enter payment's value: ")), 2)
+    except ValueError:
+        paymentValue = 0
+    while paymentValue <= 0.00:
+        printError("Payment's value must be a number greater than zero")
+        try:
+            paymentValue = round(float(input("Enter payment's value: ")), 2)
+        except ValueError:
+            paymentValue = 0
+    return '{:.2f}'.format(paymentValue)
+
+def requestPaymentDate():
+    paymentDate = validateDate(input("Enter payment's last or upcoming date in MM/DD/YYYY format: "))
+    while paymentDate is None:
+        printError("Payment date must be in the MM/DD/YYYY format.")
+        paymentDate = validateDate(input("Enter payment's last or upcoming date in MM/DD/YYYY format: "))
+    return paymentDate
 
 def userValidate(message):
     userValidate = input("\n"+message+" [Y/N]: ").lower()
@@ -139,6 +182,28 @@ def userValidate(message):
         return False
     return True
 
+def validateDate(givenDate):
+    try:
+        returnDate = datetime.datetime.strptime(givenDate, '%m/%d/%Y')
+    except ValueError:
+        return None
+    return datetime.datetime.strftime(returnDate, '%m/%d/%Y')
+
+def validateUniqueness(paymentName, isAnEdit):
+    if paymentName == "all":
+        return False
+    for payment in paymentList:
+        if payment.name.lower() == paymentName:
+            if isAnEdit:
+                return True
+            return False
+    return True
+
+def findPayment(paymentName):
+    for index, payment in enumerate(paymentList):
+        if payment.name.lower() == paymentName.lower():
+            return index
+    return -1
 
 def printLine(amt):
     print(amt*"-")
@@ -174,26 +239,6 @@ def printPayment(payment):
 
 def clearTerminal():
     os.system('cls||clear')
-
-def validateDate(givenDate):
-    try:
-        returnDate = datetime.datetime.strptime(givenDate, '%m/%d/%Y')
-    except ValueError:
-        return None
-    return datetime.datetime.strftime(returnDate, '%m/%d/%Y')
-
-def validateUniqueness(paymentName):
-    if paymentName == "all":
-        return False
-    for payment in paymentList:
-        if payment.name.lower() == paymentName:
-            return False
-    return True
-
-def findPayment(paymentName):
-    for payment in paymentList:
-        if payment.name.lower() == paymentName.lower():
-            return payment
 
 # Main Execution
 main()
