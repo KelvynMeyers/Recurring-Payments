@@ -33,7 +33,9 @@ def main():
         elif userInput[0] == "new":
             continueApp = programNew(userInput)
         elif userInput[0] == "edit":
-            continueApp = programEdit(userInput)  
+            continueApp = programEdit(userInput) 
+        elif userInput[0] == "delete":
+            continueApp = programDelete(userInput) 
         elif userInput[0] == "exit":
             continueApp = programExit(userInput)
         else:
@@ -55,6 +57,38 @@ def programView(userInput):
             return True
         foundPayment = paymentList[paymentIndex]
         printPayment(foundPayment)
+    return True
+
+def programNew(userInput):
+    readyToSubmit = False
+    while not readyToSubmit:
+        printHeader("CREATING A NEW PAYMENT")
+        # Request Payment Info
+        paymentName = requestPaymentName(False)
+        paymentValue = requestPaymentValue()
+        paymentDate = requestPaymentDate()
+        
+        # User Validation
+        printHeader("CONFIRM PAYMENT CREATION")
+        print("Name:\t" + paymentName)
+        print("Value:\t" + str(paymentValue))
+        print("Date:\t" + str(paymentDate))
+        userValidation = userValidate("Are you okay with these values?")
+        if not userValidation:
+            readyToSubmit = False
+            continue
+        readyToSubmit = True
+
+        # Create Payment and Append to paymentList
+        newPayment = Payment(paymentName, paymentValue, paymentDate)
+        if not newPayment:
+            printError("Failed to create new payment with given credentials.")
+            return False
+        paymentList.append(newPayment)
+
+    # Closure
+    printHeader("SUCCESSFULLY CREATED PAYMENT")
+    printPayment(newPayment)
     return True
 
 def programEdit(userInput):
@@ -109,36 +143,35 @@ def programEdit(userInput):
     printPayment(foundPayment)
     return True
 
-def programNew(userInput):
-    readyToSubmit = False
-    while not readyToSubmit:
-        printHeader("CREATING A NEW PAYMENT")
-        # Request Payment Info
-        paymentName = requestPaymentName(False)
-        paymentValue = requestPaymentValue()
-        paymentDate = requestPaymentDate()
-        
-        # User Validation
-        printHeader("CONFIRM PAYMENT CREATION")
-        print("Name:\t" + paymentName)
-        print("Value:\t" + str(paymentValue))
-        print("Date:\t" + str(paymentDate))
-        userValidation = userValidate("Are you okay with these values?")
-        if not userValidation:
-            readyToSubmit = False
-            continue
-        readyToSubmit = True
+def programDelete(userInput):
+    if len(userInput) == 1 or userInput == "":
+        printError("Delete must have a second parameter")
+        return True
 
-        # Create Payment and Append to paymentList
-        newPayment = Payment(paymentName, paymentValue, paymentDate)
-        if not newPayment:
-            printError("Failed to create new payment with given credentials.")
-            return False
-        paymentList.append(newPayment)
+    # Find Payment in List
+    printHeader("FINDING PAYMENT TO DELETE")
+    paymentIndex = findPayment(userInput[1])
+    if paymentIndex < 0:
+        printError("'" + userInput[1] + "' does not exist.")
+        return True
+    foundPayment = paymentList[paymentIndex]
+    
+    # Validate Payment Selection
+    printPayment(foundPayment)
+    userValidation = userValidate("Do you want to delete this payment?")
+    if not userValidation:
+        return True
+    
+    # Remove Payment in List
+    try:
+        paymentList.remove(paymentList[paymentIndex])
+    except ValueError:
+        printError("Failed to delete payment from payment list")
+        return True
 
     # Closure
-    printHeader("SUCCESSFULLY CREATED PAYMENT")
-    printPayment(newPayment)
+    printHeader("SUCCESSFULLY DELETED PAYMENT")
+    printPayment(foundPayment)
     return True
 
 def programExit(userInput):
