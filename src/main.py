@@ -10,7 +10,6 @@ def main():
     continueApp = True
     while continueApp:
         # Greeting & Commands
-        printLine(100)
         printHeader("RECURRING PAYMENTS TERMINAL")
         print("Welcome to recurring payments application terminal.")
         print("\tType 'view all' to show all existing payments")
@@ -26,7 +25,10 @@ def main():
         print()
 
         # Parse User Input
-        if userInput[0] == "view":
+        # TODO: Delete function
+        if len(userInput) > 2:
+            printError("Parameter count limited to two. Payment names must not contain spaces")
+        elif userInput[0] == "view":
             continueApp = programView(userInput)
         elif userInput[0] == "new":
             continueApp = programNew(userInput)
@@ -46,7 +48,6 @@ def programView(userInput):
         printHeader("DISPLAYING ALL PAYMENTS")
         printPayments()
     else:
-        # TODO: Make sure functionality for multi-word payments are acceptable. Possibly by appending valid userInput[1]+x's to a string
         printHeader("DISPLAYING SPECIFIC PAYMENT")
         paymentIndex = findPayment(userInput[1])
         if paymentIndex < 0:
@@ -147,8 +148,8 @@ def programExit(userInput):
 
 def requestPaymentName(isAnEdit):
     paymentName = input("Enter payment's name: ").lower()
-    while len(paymentName) <= 0 or len(paymentName) > 255 or not validateUniqueness(paymentName, isAnEdit):
-        printError("Payment's name must be a unique and contain appropriate number of characters (1-255).")
+    while len(paymentName) <= 0 or len(paymentName) > 255 or not validateUniqueness(paymentName, isAnEdit) or " " in paymentName:
+        printError("Payment's name must be unique, contain no spaces, and have the appropriate number of characters (1-255).")
         paymentName = input("Enter payment's name: ").lower()
     return paymentName
 
