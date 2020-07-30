@@ -1,5 +1,6 @@
 from payment import Payment
 import datetime
+import calendar
 import os
 
 
@@ -25,7 +26,8 @@ def main():
         print()
 
         # Parse User Input
-        # TODO: Delete function
+        # TODO: Consider not .lower()'ing payment names, only .lower() for comparison. More visually appealing
+        # TODO: Collapse user validation printing in new/edit into a single function to maintain consistency if format changes in the future
         if len(userInput) > 2:
             printError("Parameter count limited to two. Payment names must not contain spaces")
         elif userInput[0] == "view":
@@ -58,7 +60,7 @@ def programView(userInput):
         foundPayment = paymentList[paymentIndex]
         printPayment(foundPayment)
     return True
-
+    
 def programNew(userInput):
     readyToSubmit = False
     while not readyToSubmit:
@@ -67,12 +69,14 @@ def programNew(userInput):
         paymentName = requestPaymentName(False)
         paymentValue = requestPaymentValue()
         paymentDate = requestPaymentDate()
+        paymentReoccurence = requestPaymentReoccurence(paymentDate)
         
         # User Validation
         printHeader("CONFIRM PAYMENT CREATION")
-        print("Name:\t" + paymentName)
-        print("Value:\t" + str(paymentValue))
-        print("Date:\t" + str(paymentDate))
+        print("Name:\t\t\t" + paymentName)
+        print("Value:\t\t\t" + str(paymentValue))
+        print("Last Payment Date:\t" + str(paymentDate))
+        print("Upcoming Payment Date:\t" + str(paymentReoccurence))
         userValidation = userValidate("Are you okay with these values?")
         if not userValidation:
             readyToSubmit = False
@@ -80,7 +84,7 @@ def programNew(userInput):
         readyToSubmit = True
 
         # Create Payment and Append to paymentList
-        newPayment = Payment(paymentName, paymentValue, paymentDate)
+        newPayment = Payment(paymentName, paymentValue, paymentDate, paymentReoccurence)
         if not newPayment:
             printError("Failed to create new payment with given credentials.")
             return False
@@ -117,12 +121,14 @@ def programEdit(userInput):
         paymentName = requestPaymentName(True)
         paymentValue = requestPaymentValue()
         paymentDate = requestPaymentDate()
+        paymentReoccurence = requestPaymentReoccurence(paymentDate)
 
         # User Validation
         printHeader("CONFIRM PAYMENT UPDATE")
-        print("Name:\t" + paymentName)
-        print("Value:\t" + str(paymentValue))
-        print("Date:\t" + str(paymentDate))
+        print("Name:\t\t\t" + paymentName)
+        print("Value:\t\t\t" + str(paymentValue))
+        print("Last Payment Date:\t" + str(paymentDate))
+        print("Upcoming Payment Date:\t" + str(paymentReoccurence))
         userValidation = userValidate("Are you okay with these values?")
         if not userValidation:
             readyToSubmit = False
@@ -131,7 +137,7 @@ def programEdit(userInput):
 
         # Update Payment in Payment List
         backupPayment = paymentList[paymentIndex]
-        paymentList[paymentIndex] = Payment(paymentName, paymentValue, paymentDate)
+        paymentList[paymentIndex] = Payment(paymentName, paymentValue, paymentDate, paymentReoccurence)
         foundPayment = paymentList[paymentIndex]
         if not foundPayment:
             printError("Failed to update existing payment with given credentials. Returning to old values")
@@ -188,30 +194,52 @@ def requestPaymentName(isAnEdit):
 
 def requestPaymentValue():
     # TODO: Clean up payment value section
+    userMessage = "Enter payment's value: "
     try:
-        paymentValue = round(float(input("Enter payment's value: ")), 2)
+        paymentValue = round(float(input(userMessage)), 2)
     except ValueError:
         paymentValue = 0
     while paymentValue <= 0.00:
         printError("Payment's value must be a number greater than zero")
         try:
-            paymentValue = round(float(input("Enter payment's value: ")), 2)
+            paymentValue = round(float(input(userMessage)), 2)
         except ValueError:
             paymentValue = 0
     return '{:.2f}'.format(paymentValue)
 
 def requestPaymentDate():
-    paymentDate = validateDate(input("Enter payment's last or upcoming date in MM/DD/YYYY format: "))
+    userMessage = "Enter last payment date in MM/DD/YYYY format: "
+    paymentDate = validateDate(input(userMessage))
     while paymentDate is None:
         printError("Payment date must be in the MM/DD/YYYY format.")
-        paymentDate = validateDate(input("Enter payment's last or upcoming date in MM/DD/YYYY format: "))
+        paymentDate = validateDate(input(userMessage))
     return paymentDate
 
+def requestPaymentReoccurence(givenDate):
+    userMessage = "Enter number of months between each payment: "
+    userValue = 0
+    validReoccurence = False
+    while not validReoccurence:
+        try:
+            userValue = int(input(userMessage))
+        except ValueError:
+            printError("Must provide a valid integer number")
+            continue
+        if userValue <= 0:
+            printError("For a payment to be recurring, time between each payment must be at least 1 month")
+            continue
+        validReoccurence = True
+    # Retrieve Date, Add Months, and Return Reformatted Date
+    givenDate = datetime.datetime.strptime(givenDate, '%m/%d/%Y')
+    givenDate = addMonths(givenDate,userValue)
+    return datetime.datetime.strftime(givenDate, '%m/%d/%Y')
+
 def userValidate(message):
-    userValidate = input("\n"+message+" [Y/N]: ").lower()
+    userMessage = "\n"+message+" [Y/N]: "
+    userValidate = input(userMessage).lower()
     while userValidate != "y" and userValidate != "n" and userValidate != "yes" and userValidate != "no":
         printError("Must respond with either Y or N")
-        userValidate = input("\n"+message+" [Y/N]: ").lower()
+        userValidate = input(userMessage).lower()
     if userValidate == "n" or userValidate == "no":
         return False
     return True
@@ -232,6 +260,13 @@ def validateUniqueness(paymentName, isAnEdit):
                 return True
             return False
     return True
+
+def addMonths(givenDate, numMonths):
+    month = givenDate.month - 1 + numMonths
+    year = givenDate.year + numMonths // 12
+    month = month % 12 + 1
+    day = min(givenDate.day, calendar.monthrange(year,month)[1])
+    return datetime.date(year,month,day)
 
 def findPayment(paymentName):
     for index, payment in enumerate(paymentList):
@@ -267,12 +302,15 @@ def printPayments():
 def printPayment(payment):
     if payment.__class__.__name__ != "Payment":
         return
-    print("Name:\t" + payment.name)
-    print("Value:\t" + str(payment.value))
-    print("Date:\t" + str(payment.date))
+    print("Name:\t\t\t" + payment.name)
+    print("Value:\t\t\t" + str(payment.value))
+    print("Last Payment Date:\t" + str(payment.lastDate))
+    print("Upcoming Payment Date:\t" + str(payment.upcomingDate))
 
 def clearTerminal():
     os.system('cls||clear')
 
 # Main Execution
-main()
+#main()
+if __name__ == "__main__":
+    main()

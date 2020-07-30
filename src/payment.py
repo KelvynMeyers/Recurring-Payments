@@ -1,5 +1,6 @@
 class Payment:
-    def __init__(self, name, value, date):
+    def __init__(self, name, value, lastDate, upcomingDate,):
         self.name = name
         self.value = value
-        self.date = date
+        self.lastDate = lastDate
+        self.upcomingDate = upcomingDate
