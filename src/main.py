@@ -193,7 +193,7 @@ def requestPaymentName(isAnEdit):
     return paymentName
 
 def requestPaymentValue():
-    # TODO: Clean up payment value section
+    """
     userMessage = "Enter payment's value: "
     try:
         paymentValue = round(float(input(userMessage)), 2)
@@ -205,6 +205,20 @@ def requestPaymentValue():
             paymentValue = round(float(input(userMessage)), 2)
         except ValueError:
             paymentValue = 0
+    return '{:.2f}'.format(paymentValue)
+    """
+    userMessage = "Enter payment's value: "
+    validValue = False
+    while not validValue:
+        try:
+            paymentValue = round(float(input(userMessage)), 2)
+        except ValueError:
+            printError("Payment's value must be a valid number")
+            continue
+        if paymentValue <= 0.0:
+            printError("Payment's value must be a number greater than zero")
+            continue
+        validValue = True
     return '{:.2f}'.format(paymentValue)
 
 def requestPaymentDate():
@@ -297,7 +311,7 @@ def printPayments():
     for payment in paymentList:
         printPayment(payment)
         if paymentList.index(payment) != len(paymentList)-1:
-            printLine(25)
+            printLine(50)
 
 def printPayment(payment):
     if payment.__class__.__name__ != "Payment":
