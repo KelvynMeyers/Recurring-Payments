@@ -233,10 +233,13 @@ def requestPaymentReoccurence(givenDate):
 
 def userValidate(message):
     userMessage = "\n"+message+" [Y/N]: "
-    userValidate = input(userMessage).lower()
-    while userValidate != "y" and userValidate != "n" and userValidate != "yes" and userValidate != "no":
-        printError("Must respond with either Y or N")
+    validResponse = False
+    while not validResponse:
         userValidate = input(userMessage).lower()
+        if userValidate != "y" and userValidate != "n" and userValidate != "yes" and userValidate != "no":
+            printError("Must respond with either Y or N")
+            continue
+        validResponse = True
     if userValidate == "n" or userValidate == "no":
         return False
     return True
