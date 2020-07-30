@@ -180,10 +180,13 @@ def programExit(userInput):
     return False
 
 def requestPaymentName(isAnEdit):
-    paymentName = input("Enter payment's name: ").lower()
-    while len(paymentName) <= 0 or len(paymentName) > 255 or not validateUniqueness(paymentName, isAnEdit) or " " in paymentName:
-        printError("Payment's name must be unique, contain no spaces, and have the appropriate number of characters (1-255).")
-        paymentName = input("Enter payment's name: ").lower()
+    validPayment = False
+    while not validPayment:
+        paymentName = input("Enter payment's name: ")
+        if len(paymentName) <= 0 or len(paymentName) > 255 or not validateUniqueness(paymentName, isAnEdit) or " " in paymentName:
+            printError("Payment's name must be unique, contain no spaces, and have the appropriate number of characters (1-255).")
+            continue
+        validPayment = True
     return paymentName
 
 def requestPaymentValue():
@@ -249,7 +252,7 @@ def validateUniqueness(paymentName, isAnEdit):
     if paymentName == "all":
         return False
     for payment in paymentList:
-        if payment.name.lower() == paymentName:
+        if payment.name.lower() == paymentName.lower():
             if isAnEdit:
                 return True
             return False
