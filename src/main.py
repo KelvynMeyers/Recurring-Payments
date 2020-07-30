@@ -73,10 +73,7 @@ def programNew(userInput):
         
         # User Validation
         printHeader("CONFIRM PAYMENT CREATION")
-        print("Name:\t\t\t" + paymentName)
-        print("Value:\t\t\t" + str(paymentValue))
-        print("Last Payment Date:\t" + str(paymentDate))
-        print("Upcoming Payment Date:\t" + str(paymentReoccurence))
+        printUserInputs(paymentName, paymentValue, paymentDate, paymentReoccurence)
         userValidation = userValidate("Are you okay with these values?")
         if not userValidation:
             readyToSubmit = False
@@ -125,10 +122,7 @@ def programEdit(userInput):
 
         # User Validation
         printHeader("CONFIRM PAYMENT UPDATE")
-        print("Name:\t\t\t" + paymentName)
-        print("Value:\t\t\t" + str(paymentValue))
-        print("Last Payment Date:\t" + str(paymentDate))
-        print("Upcoming Payment Date:\t" + str(paymentReoccurence))
+        printUserInputs(paymentName, paymentValue, paymentDate, paymentReoccurence)
         userValidation = userValidate("Are you okay with these values?")
         if not userValidation:
             readyToSubmit = False
@@ -193,20 +187,6 @@ def requestPaymentName(isAnEdit):
     return paymentName
 
 def requestPaymentValue():
-    """
-    userMessage = "Enter payment's value: "
-    try:
-        paymentValue = round(float(input(userMessage)), 2)
-    except ValueError:
-        paymentValue = 0
-    while paymentValue <= 0.00:
-        printError("Payment's value must be a number greater than zero")
-        try:
-            paymentValue = round(float(input(userMessage)), 2)
-        except ValueError:
-            paymentValue = 0
-    return '{:.2f}'.format(paymentValue)
-    """
     userMessage = "Enter payment's value: "
     validValue = False
     while not validValue:
@@ -316,10 +296,13 @@ def printPayments():
 def printPayment(payment):
     if payment.__class__.__name__ != "Payment":
         return
-    print("Name:\t\t\t" + payment.name)
-    print("Value:\t\t\t" + str(payment.value))
-    print("Last Payment Date:\t" + str(payment.lastDate))
-    print("Upcoming Payment Date:\t" + str(payment.upcomingDate))
+    printUserInputs(payment.name,payment.value,payment.lastDate,payment.upcomingDate)
+
+def printUserInputs(paymentName, paymentValue, paymentDate, paymentReoccurence):
+    print("Name:\t\t\t" + paymentName)
+    print("Value:\t\t\t" + str(paymentValue))
+    print("Last Payment:\t\t" + str(paymentDate))
+    print("Upcoming Payment:\t" + str(paymentReoccurence))
 
 def clearTerminal():
     os.system('cls||clear')
