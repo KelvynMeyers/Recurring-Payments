@@ -12,7 +12,7 @@ def main():
     continueApp = True
     while continueApp:
         # TODO: Save payments to a file, creating it if necessary. Write to file after each new payment. Load payments at beginning of main()
-        # TODO: Show past payment information above edit. Or go like: "Payment Name: Disney+ >> userInputGoesHere" then "Payment Name: Spotify"
+        # TODO: Move similar functions to separate files
         userInput = requestUserInput()
 
         # Parse User Input
@@ -190,7 +190,7 @@ def requestUserInput():
 def requestPaymentName(foundPayment):
     userMessage = "Enter payment's name: "
     if foundPayment:
-        userMessage = "Change name from " + foundPayment.name + " to: "
+        userMessage = "Change name from '" + foundPayment.name + "' to: "
     validPayment = False
     while not validPayment:
         paymentName = input(userMessage)
@@ -203,7 +203,7 @@ def requestPaymentName(foundPayment):
 def requestPaymentValue(foundPayment):
     userMessage = "Enter payment's value: "
     if foundPayment:
-        userMessage = "Change value from " + foundPayment.value + " to: "
+        userMessage = "Change value from '" + foundPayment.value + "' to: "
     validValue = False
     while not validValue:
         try:
@@ -220,7 +220,7 @@ def requestPaymentValue(foundPayment):
 def requestPaymentDate(foundPayment):
     userMessage = "Enter last payment date in MM/DD/YYYY format: "
     if foundPayment:
-        userMessage = "Change last payment date from " + foundPayment.lastDate + " to: "
+        userMessage = "Change last payment date from '" + foundPayment.lastDate + "' to: "
     paymentDate = validateDate(input(userMessage))
     while paymentDate is None:
         printError("Payment date must be in the MM/DD/YYYY format.")
