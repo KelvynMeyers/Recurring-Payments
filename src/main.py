@@ -8,28 +8,19 @@ paymentList = []
 
 
 def main():
+    printHelp()
     continueApp = True
     while continueApp:
-        # Greeting & Commands
-        printHeader("RECURRING PAYMENTS TERMINAL")
-        print("Welcome to recurring payments application terminal.")
-        print("\tType 'view all' to show all existing payments")
-        print("\tType 'view name' to show an existing payment")
-        print("\tType 'new' to create a new payment")
-        print("\tType 'edit name' to edit an existing payment")
-        print("\tType 'delete name' to delete an existing payment")
-        print("\tType 'exit' to end the program")
-
-        # Request User Input
-        userInput = input("\nUser Input: ").lower()
-        userInput = userInput.split(" ")
-        print()
+        # TODO: Save payments to a file, creating it if necessary. Write to file after each new payment. Load payments at beginning of main()
+        # TODO: Show past payment information above edit. Or go like: "Payment Name: Disney+ >> userInputGoesHere" then "Payment Name: Spotify"
+        userInput = requestUserInput()
 
         # Parse User Input
-        # TODO: Consider not .lower()'ing payment names, only .lower() for comparison. More visually appealing
-        # TODO: Collapse user validation printing in new/edit into a single function to maintain consistency if format changes in the future
         if len(userInput) > 2:
             printError("Parameter count limited to two. Payment names must not contain spaces")
+        elif userInput[0] == "help":
+            printHelp()
+            continueApp = True
         elif userInput[0] == "view":
             continueApp = programView(userInput)
         elif userInput[0] == "new":
@@ -41,12 +32,14 @@ def main():
         elif userInput[0] == "exit":
             continueApp = programExit(userInput)
         else:
-            printError("Invalid parameters provided!")
+            printHeader("INVALID USER INPUT")
+            printError("Invalid parameters provided! Type 'help' to see available commands")
 
-        printCloser()
+        #printCloser()
 
 def programView(userInput):
     if len(userInput) == 1 or userInput[1] == "":
+        printHeader("VIEW PAYMENT ERROR")
         printError("View must contain a second parameter")
     elif userInput[1] == "all":
         printHeader("DISPLAYING ALL PAYMENTS")
@@ -66,9 +59,9 @@ def programNew(userInput):
     while not readyToSubmit:
         printHeader("CREATING A NEW PAYMENT")
         # Request Payment Info
-        paymentName = requestPaymentName(False)
-        paymentValue = requestPaymentValue()
-        paymentDate = requestPaymentDate()
+        paymentName = requestPaymentName(None)
+        paymentValue = requestPaymentValue(None)
+        paymentDate = requestPaymentDate(None)
         paymentReoccurence = requestPaymentReoccurence(paymentDate)
         
         # User Validation
@@ -83,6 +76,7 @@ def programNew(userInput):
         # Create Payment and Append to paymentList
         newPayment = Payment(paymentName, paymentValue, paymentDate, paymentReoccurence)
         if not newPayment:
+            printHeader("NEW PAYMENT ERROR")
             printError("Failed to create new payment with given credentials.")
             return False
         paymentList.append(newPayment)
@@ -94,6 +88,7 @@ def programNew(userInput):
 
 def programEdit(userInput):
     if len(userInput) == 1 or userInput == "":
+        printHeader("EDIT PAYMENT ERROR")
         printError("Edit must have a second parameter")
         return True
     
@@ -115,9 +110,9 @@ def programEdit(userInput):
     while not readyToSubmit:
         printHeader("UPDATING EXISTING PAYMENT")
         # Request Payment Info
-        paymentName = requestPaymentName(True)
-        paymentValue = requestPaymentValue()
-        paymentDate = requestPaymentDate()
+        paymentName = requestPaymentName(foundPayment)
+        paymentValue = requestPaymentValue(foundPayment)
+        paymentDate = requestPaymentDate(foundPayment)
         paymentReoccurence = requestPaymentReoccurence(paymentDate)
 
         # User Validation
@@ -134,6 +129,7 @@ def programEdit(userInput):
         paymentList[paymentIndex] = Payment(paymentName, paymentValue, paymentDate, paymentReoccurence)
         foundPayment = paymentList[paymentIndex]
         if not foundPayment:
+            printHeader("EDIT PAYMENT ERROR")
             printError("Failed to update existing payment with given credentials. Returning to old values")
             paymentList[paymentIndex] = backupPayment
             return False
@@ -145,6 +141,7 @@ def programEdit(userInput):
 
 def programDelete(userInput):
     if len(userInput) == 1 or userInput == "":
+        printHeader("DELETE PAYMENT ERROR")
         printError("Delete must have a second parameter")
         return True
 
@@ -152,6 +149,7 @@ def programDelete(userInput):
     printHeader("FINDING PAYMENT TO DELETE")
     paymentIndex = findPayment(userInput[1])
     if paymentIndex < 0:
+        printHeader("DELETE PAYMENT ERROR")
         printError("'" + userInput[1] + "' does not exist.")
         return True
     foundPayment = paymentList[paymentIndex]
@@ -166,6 +164,7 @@ def programDelete(userInput):
     try:
         paymentList.remove(paymentList[paymentIndex])
     except ValueError:
+        printHeader("DELETE PAYMENT ERROR")
         printError("Failed to delete payment from payment list")
         return True
 
@@ -177,20 +176,34 @@ def programDelete(userInput):
 def programExit(userInput):
     printHeader("EXITING PROGRAM")
     print("Thank you for utilizing the service! Goodbye.")
+    printLine(50)
+    print()
     return False
 
-def requestPaymentName(isAnEdit):
+def requestUserInput():
+    printLine(50)
+    userInput = input("\nUser Input: ").lower()
+    userInput = userInput.split(" ")
+    print()
+    return userInput
+
+def requestPaymentName(foundPayment):
+    userMessage = "Enter payment's name: "
+    if foundPayment:
+        userMessage = "Change name from " + foundPayment.name + " to: "
     validPayment = False
     while not validPayment:
-        paymentName = input("Enter payment's name: ")
-        if len(paymentName) <= 0 or len(paymentName) > 255 or not validateUniqueness(paymentName, isAnEdit) or " " in paymentName:
+        paymentName = input(userMessage)
+        if len(paymentName) <= 0 or len(paymentName) > 255 or not validateUniqueness(paymentName, foundPayment) or " " in paymentName:
             printError("Payment's name must be unique, contain no spaces, and have the appropriate number of characters (1-255).")
             continue
         validPayment = True
     return paymentName
 
-def requestPaymentValue():
+def requestPaymentValue(foundPayment):
     userMessage = "Enter payment's value: "
+    if foundPayment:
+        userMessage = "Change value from " + foundPayment.value + " to: "
     validValue = False
     while not validValue:
         try:
@@ -204,8 +217,10 @@ def requestPaymentValue():
         validValue = True
     return '{:.2f}'.format(paymentValue)
 
-def requestPaymentDate():
+def requestPaymentDate(foundPayment):
     userMessage = "Enter last payment date in MM/DD/YYYY format: "
+    if foundPayment:
+        userMessage = "Change last payment date from " + foundPayment.lastDate + " to: "
     paymentDate = validateDate(input(userMessage))
     while paymentDate is None:
         printError("Payment date must be in the MM/DD/YYYY format.")
@@ -251,12 +266,12 @@ def validateDate(givenDate):
         return None
     return datetime.datetime.strftime(returnDate, '%m/%d/%Y')
 
-def validateUniqueness(paymentName, isAnEdit):
+def validateUniqueness(paymentName, foundPayment):
     if paymentName == "all":
         return False
     for payment in paymentList:
         if payment.name.lower() == paymentName.lower():
-            if isAnEdit:
+            if foundPayment:
                 return True
             return False
     return True
@@ -282,11 +297,6 @@ def printHeader(text):
     print(text)
     printLine(50)
 
-def printCloser():
-    printLine(50)
-    input("Press Enter to Continue ")
-    clearTerminal()
-
 def printError(text):
     print("\tERROR: "+text)
 
@@ -309,6 +319,17 @@ def printUserInputs(paymentName, paymentValue, paymentDate, paymentReoccurence):
     print("Value:\t\t\t" + str(paymentValue))
     print("Last Payment:\t\t" + str(paymentDate))
     print("Upcoming Payment:\t" + str(paymentReoccurence))
+
+def printHelp():
+    printHeader("RECURRING PAYMENTS TERMINAL")
+    print("Welcome to recurring payments application terminal.")
+    print("\tType 'view all' to show all existing payments")
+    print("\tType 'view name' to show an existing payment")
+    print("\tType 'new' to create a new payment")
+    print("\tType 'edit name' to edit an existing payment")
+    print("\tType 'delete name' to delete an existing payment")
+    print("\tType 'help' to return to this menu")
+    print("\tType 'exit' to end the program")
 
 def clearTerminal():
     os.system('cls||clear')
